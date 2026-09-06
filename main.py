@@ -10,7 +10,16 @@ CHAT_ID = os.environ.get("CHAT_ID")
 def get_gold_prices():
     url = "https://data-asg.goldprice.org/dbXRates/SAR"
 
-    response = requests.get(url, timeout=20)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    response = requests.get(
+        url,
+        headers=headers,
+        timeout=20
+    )
+
     response.raise_for_status()
 
     data = response.json()
@@ -34,19 +43,27 @@ def send_message(message):
         data={
             "chat_id": CHAT_ID,
             "text": message,
-            "parse_mode": "HTML",
+            "parse_mode": "HTML"
         },
-        timeout=20,
+        timeout=20
     )
 
     response.raise_for_status()
 
 
 def main():
-    prices = get_gold_prices()
-    g24, g22, g21, g18 = prices
+    if not BOT_TOKEN:
+        raise ValueError("BOT_TOKEN غير موجود")
 
-    now = datetime.now(ZoneInfo("Asia/Riyadh"))
+    if not CHAT_ID:
+        raise ValueError("CHAT_ID غير موجود")
+
+    g24, g22, g21, g18 = get_gold_prices()
+
+    now = datetime.now(
+        ZoneInfo("Asia/Riyadh")
+    )
+
     updated = now.strftime("%Y-%m-%d %H:%M")
 
     message = f"""🇸🇦 <b>أسعار الذهب في السعودية</b> 🥇
@@ -57,12 +74,14 @@ def main():
 🔸 <b>عيار 18:</b> {g18:.2f} ريال/غرام
 
 🕐 <b>آخر تحديث:</b> {updated}
+
 📍 السعر تقريبي ولا يشمل المصنعية والضريبة.
 
 @GoldSaudiB
 """
 
     send_message(message)
+
     print("تم إرسال أسعار الذهب إلى القناة بنجاح ✅")
 
 
