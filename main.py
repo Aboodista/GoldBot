@@ -6,64 +6,100 @@ from zoneinfo import ZoneInfo
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 
+
 def get_gold_prices():
-url = "https://data-asg.goldprice.org/dbXRates/SAR"
+    print("⏳ جاري جلب أسعار الذهب...")
 
-headers = {  
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"  
-}  
+    url = "https://data-asg.goldprice.org/dbXRates/SAR"
 
-response = requests.get(  
-    url,  
-    headers=headers,  
-    timeout=20  
-)  
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
-response.raise_for_status()  
+    response = requests.get(
+        url,
+        headers=headers,
+        timeout=20
+    )
 
-data = response.json()  
-item = data["items"][0]  
+    print("📡 حالة موقع الذهب:", response.status_code)
 
-ounce_price = float(item["xauPrice"])  
+    response.raise_for_status()
 
-gram_24 = ounce_price / 31.1034768  
-gram_22 = gram_24 * 22 / 24  
-gram_21 = gram_24 * 21 / 24  
-gram_18 = gram_24 * 18 / 24  
+    data = response.json()
 
-return gram_24, gram_22, gram_21, gram_18
+    if "items" not in data or not data["items"]:
+        raise ValueError("❌ لم يتم العثور على بيانات الذهب")
+
+    item = data["items"][0]
+
+    ounce_price = float(item["xauPrice"])
+
+    gram_24 = ounce_price / 31.1034768
+    gram_22 = gram_24 * 22 / 24
+    gram_21 = gram_24 * 21 / 24
+    gram_18 = gram_24 * 18 / 24
+
+    print("✅ تم جلب أسعار الذهب بنجاح")
+
+    return gram_24, gram_22, gram_21, gram_18
+
 
 def send_message(message):
-url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    print("⏳ جاري إرسال الرسالة إلى تيليجرام...")
 
-response = requests.post(  
-    url,  
-    data={  
-        "chat_id": CHAT_ID,  
-        "text": message,  
-        "parse_mode": "HTML"  
-    },  
-    timeout=20  
-)  
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-response.raise_for_status()
+    response = requests.post(
+        url,
+        data={
+            "chat_id": CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        },
+        timeout=20
+    )
+
+    print("📡 حالة Telegram:", response.status_code)
+    print("📨 رد Telegram:", response.text)
+
+    response.raise_for_status()
+
+    result = response.json()
+
+    if not result.get("ok"):
+        raise ValueError(
+            f"❌ Telegram رفض إرسال الرسالة: {result}"
+        )
+
+    print("✅ تم إرسال الرسالة بنجاح")
+
 
 def main():
-if not BOT_TOKEN:
-raise ValueError("BOT_TOKEN غير موجود")
+    print("🚀 بدء تشغيل بوت الذهب...")
 
-if not CHAT_ID:  
-    raise ValueError("CHAT_ID غير موجود")  
+    if not BOT_TOKEN:
+        raise ValueError(
+            "❌ BOT_TOKEN غير موجود. تأكد من إضافته في Environment Variables."
+        )
 
-g24, g22, g21, g18 = get_gold_prices()  
+    if not CHAT_ID:
+        raise ValueError(
+            "❌ CHAT_ID غير موجود. تأكد من إضافته في Environment Variables."
+        )
 
-now = datetime.now(  
-    ZoneInfo("Asia/Riyadh")  
-)  
+    print("✅ BOT_TOKEN موجود")
+    print("✅ CHAT_ID موجود")
 
-updated = now.strftime("%Y-%m-%d %H:%M")  
+    g24, g22, g21, g18 = get_gold_prices()
 
-message = f"""🇸🇦 <b>أسعار الذهب في السعودية</b> 🥇
+    now = datetime.now(
+        ZoneInfo("Asia/Riyadh")
+    )
+
+    updated = now.strftime("%Y-%m-%d %H:%M")
+
+    message = f"""🇸🇦 <b>أسعار الذهب في السعودية</b> 🥇
 
 🔸 <b>عيار 24:</b> {g24:.2f} ريال/غرام
 🔸 <b>عيار 22:</b> {g22:.2f} ريال/غرام
@@ -77,9 +113,17 @@ message = f"""🇸🇦 <b>أسعار الذهب في السعودية</b> 🥇
 @GoldSaudiB
 """
 
-send_message(message)  
+    send_message(message)
 
-print("تم إرسال أسعار الذهب إلى القناة بنجاح ✅")
+    print("🎉 تم إرسال أسعار الذهب إلى القناة بنجاح!")
 
-if name == "main":
-main()
+
+if __name__ == "__main__":
+    main()
+مهم: لا تغيّر هذين السطرين:
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+CHAT_ID = os.environ.get("CHAT_ID")
+وفي إعدادات الاستضافة لازم تكون عندك:
+BOT_TOKEN = توكن البوت
+CHAT_ID = @GoldSaudiB
+وبعدها شغّل البوت، وإذا ما اشتغل انسخ لي الـ Logs اللي تظهر لك وأنا أحدد المشكلة مباشرة.
